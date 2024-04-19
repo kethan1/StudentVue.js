@@ -1,10 +1,10 @@
 # StudentVue.js
 
-Node.js Library for interacting with StudentVue portals.
+Node.js library that facilitates interaction with the Student Information System StudentVue.
 
 ## Installation
 
-Install with `npm install studentvue.js`
+Install with `npm install studentvue.js`.
 
 ## Basic Usage
 
