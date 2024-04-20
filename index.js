@@ -21,9 +21,9 @@ class StudentVueClient {
         return this._xmlJsonSerialize(this._makeServiceRequest('Attendance'));
     }
 
-    getGradebook(reportPeriod) {
+    getGradebook(reportPeriod = null) {
         let params = {};
-        if (typeof reportPeriod !== 'undefined') {
+        if (reportPeriod) {
             params.ReportPeriod = reportPeriod;
         }
         return this._xmlJsonSerialize(this._makeServiceRequest('Gradebook', params));
@@ -37,9 +37,9 @@ class StudentVueClient {
         return this._xmlJsonSerialize(this._makeServiceRequest('StudentInfo'));
     }
 
-    getSchedule(termIndex) {
+    getSchedule(termIndex = null) {
         let params = {};
-        if (typeof termIndex !== 'undefined') {
+        if (termIndex) {
             params.TermIndex = termIndex;
         }
         return this._xmlJsonSerialize(this._makeServiceRequest('StudentClassList', params));
@@ -70,13 +70,8 @@ class StudentVueClient {
     }
 
     _makeServiceRequest(methodName, params = {}, serviceHandle = 'PXPWebServices') {
-        let paramStr = '&lt;Parms&gt;';
-        Object.entries(params).forEach(([key, value]) => {
-            paramStr += '&lt;' + key + '&gt;';
-            paramStr += value;
-            paramStr += '&lt;/' + key + '&gt;';
-        });
-        paramStr += '&lt;/Parms&gt;';
+        let paramStr = `<Parms>${Object.entries(params).reduce((acc, [key, value]) => `${acc}<${key}>${value}</${key}>`, '')}</Parms>`;
+        paramStr = paramStr.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
         return this.client.ProcessWebServiceRequestAsync({
             userID: this.username,
@@ -90,7 +85,7 @@ class StudentVueClient {
     }
 }
 
-function login(url, username, password, soapOptions = {}) {
+async function login(url, username, password, soapOptions = {}) {
     const host = new URL(url).host;
     const endpoint = `https://${ host }/Service/PXPCommunication.asmx`;
 
@@ -99,10 +94,10 @@ function login(url, username, password, soapOptions = {}) {
         escapeXML: false
     }, soapOptions);
 
-    const wsdlURL = endpoint + '?WSDL';
+    const wsdlURL = `${endpoint}?WSDL`;
 
-    return soap.createClientAsync(wsdlURL, resolvedOptions)
-        .then(client => new StudentVueClient(username, password, client));
+    const client = await soap.createClientAsync(wsdlURL, resolvedOptions);
+    return new StudentVueClient(username, password, client);
 }
 
 function getDistrictUrls(zipCode) {
